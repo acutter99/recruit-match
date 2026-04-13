@@ -12,7 +12,7 @@ from typing import Optional, List
 from app.matcher import evaluate_candidate
 from app.sourcing import generate_sourcing_suggestions
 
-app = FastAPI(title="RecruitMatch", version="0.3.0")
+app = FastAPI(title="RecruitMatch", version="0.4.0")
 
 # Serve static files (recruiter UI)
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
@@ -38,6 +38,8 @@ class MatchRequest(BaseModel):
     role_description: str
     candidate_resume: str
     screen_notes: str = ""
+    tone: str = "professional"
+    custom_instructions: str = ""
 
 
 class SourceRequest(BaseModel):
@@ -54,6 +56,15 @@ class ClientCreate(BaseModel):
 class RoleCreate(BaseModel):
     title: str
     description: str
+
+
+class RegenerateWriteupRequest(BaseModel):
+    client_firm: str
+    role_description: str
+    candidate_resume: str
+    screen_notes: str = ""
+    tone: str = "professional"
+    custom_instructions: str = ""
 
 
 # --- Page routes ---
@@ -144,8 +155,23 @@ async def match(req: MatchRequest):
         role_description=req.role_description,
         candidate_resume=req.candidate_resume,
         screen_notes=req.screen_notes,
+        tone=req.tone,
+        custom_instructions=req.custom_instructions,
     )
     return JSONResponse(content=result)
+
+
+@app.post("/api/regenerate-writeup")
+async def regenerate_writeup(req: RegenerateWriteupRequest):
+    """Regenerate just the write-up with a different tone without re-running full analysis."""
+    from app.prompts import build_writeup_prompt
+    from app.llm import call_llm
+    writeup_prompt = build_writeup_prompt(
+        req.client_firm, req.role_description, req.candidate_resume,
+        req.screen_notes, None, req.tone, req.custom_instructions
+    )
+    writeup = await call_llm(writeup_prompt)
+    return JSONResponse(content={"candidate_writeup": writeup or "LLM not configured. Set API key in .env.", "tone_used": req.tone})
 
 
 @app.post("/api/source")
