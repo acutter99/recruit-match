@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RecruitMatch - Candidate Screening Tool</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh}
+.container{max-width:1200px;margin:0 auto;padding:20px}
+h1{text-align:center;padding:24px 0;font-size:28px;color:#38bdf8}
+.subtitle{text-align:center;color:#94a3b8;margin-bottom:32px;font-size:14px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px}
+.card{background:#1e293b;border-radius:12px;padding:20px;border:1px solid #334155}
+.card h2{font-size:16px;color:#38bdf8;margin-bottom:12px}
+label{display:block;font-size:13px;color:#94a3b8;margin-bottom:6px;margin-top:12px}
+input,textarea{width:100%;padding:10px 12px;background:#0f172a;border:1px solid #334155;border-radius:8px;color:#e2e8f0;font-size:14px;font-family:inherit}
+textarea{min-height:160px;resize:vertical}
+input:focus,textarea:focus{outline:none;border-color:#38bdf8}
+.btn{display:block;width:100%;padding:14px;background:#2563eb;color:#fff;border:none;border-radius:10px;font-size:16px;font-weight:600;cursor:pointer;transition:background .2s}
+.btn:hover{background:#1d4ed8}
+.btn:disabled{background:#334155;cursor:not-allowed}
+#results{display:none}
+.score-badge{display:inline-block;padding:8px 20px;border-radius:20px;font-size:28px;font-weight:700;margin:12px 0}
+.score-high{background:#064e3b;color:#34d399}
+.score-mid{background:#713f12;color:#fbbf24}
+.score-low{background:#7f1d1d;color:#f87171}
+.rec{font-size:18px;font-weight:600;margin:8px 0 16px}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+.detail-card{background:#0f172a;border-radius:8px;padding:14px;border:1px solid #334155}
+.detail-card h3{font-size:13px;color:#38bdf8;margin-bottom:8px}
+.detail-card ul{padding-left:18px;font-size:13px;line-height:1.8}
+.detail-card li{color:#cbd5e1}
+.email-box{background:#0f172a;border:1px solid #334155;border-radius:8px;padding:16px;margin-top:16px;font-size:14px;line-height:1.7;white-space:pre-wrap}
+.copy-btn{display:inline-block;margin-top:8px;padding:6px 16px;background:#334155;color:#e2e8f0;border:none;border-radius:6px;cursor:pointer;font-size:12px}
+.copy-btn:hover{background:#475569}
+.spinner{display:none;text-align:center;padding:40px;font-size:16px;color:#94a3b8}
+@media(max-width:768px){.grid,.detail-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>RecruitMatch</h1>
+<p class="subtitle">Paste role details and candidate info to get an instant fit assessment and client email</p>
+
+<div class="grid">
+  <div class="card">
+    <h2>Role Information</h2>
+    <label for="firm">Client Firm Name</label>
+    <input type="text" id="firm" placeholder="e.g. Smith & Associates LLP">
+    <label for="role">Role Description</label>
+    <textarea id="role" placeholder="Paste the full job description or role requirements here..."></textarea>
+  </div>
+  <div class="card">
+    <h2>Candidate Information</h2>
+    <label for="resume">Candidate Resume</label>
+    <textarea id="resume" placeholder="Paste the candidate's resume text here..."></textarea>
+    <label for="notes">Your Screen Notes (optional)</label>
+    <textarea id="notes" style="min-height:80px" placeholder="e.g. Strong communicator, 8 yrs insurance defense, looking for partner track..."></textarea>
+  </div>
+</div>
+
+<button class="btn" id="analyzeBtn" onclick="analyze()">Analyze Candidate Fit</button>
+
+<div class="spinner" id="spinner">Analyzing candidate... this may take 10-20 seconds with LLM enabled...</div>
+
+<div id="results">
+  <div class="card" style="margin-top:24px">
+    <h2>Match Result</h2>
+    <div id="scoreBadge" class="score-badge"></div>
+    <div id="recommendation" class="rec"></div>
+
+    <div class="detail-grid">
+      <div class="detail-card">
+        <h3>Matched Keywords</h3>
+        <ul id="matchedKw"></ul>
+      </div>
+      <div class="detail-card">
+        <h3>Missing / Gaps</h3>
+        <ul id="missingKw"></ul>
+      </div>
+      <div class="detail-card">
+        <h3>Strengths</h3>
+        <ul id="strengths"></ul>
+      </div>
+      <div class="detail-card">
+        <h3>Concerns</h3>
+        <ul id="concerns"></ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <h2>Client Email Write-Up</h2>
+    <div class="email-box" id="emailBody"></div>
+    <button class="copy-btn" onclick="copyEmail()">Copy to Clipboard</button>
+  </div>
+</div>
+</div>
+
+<script>
+async function analyze() {
+  const btn = document.getElementById('analyzeBtn');
+  const spinner = document.getElementById('spinner');
+  const results = document.getElementById('results');
+  btn.disabled = true;
+  spinner.style.display = 'block';
+  results.style.display = 'none';
+
+  const body = {
+    client_firm: document.getElementById('firm').value,
+    role_description: document.getElementById('role').value,
+    candidate_resume: document.getElementById('resume').value,
+    screen_notes: document.getElementById('notes').value,
+  };
+
+  try {
+    const resp = await fetch('/api/match', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(body),
+    });
+    const data = await resp.json();
+    renderResults(data);
+  } catch (e) {
+    alert('Error: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    spinner.style.display = 'none';
+  }
+}
+
+function renderResults(data) {
+  const results = document.getElementById('results');
+  results.style.display = 'block';
+
+  const badge = document.getElementById('scoreBadge');
+  badge.textContent = data.score + '/100';
+  badge.className = 'score-badge ' + (data.score >= 75 ? 'score-high' : data.score >= 50 ? 'score-mid' : 'score-low');
+
+  document.getElementById('recommendation').textContent = data.recommendation;
+
+  const bl = data.baseline || {};
+  fillList('matchedKw', bl.matched_keywords || []);
+  fillList('missingKw', bl.missing_keywords || []);
+
+  const llm = data.llm_analysis || {};
+  fillList('strengths', llm.strengths || ['Run with LLM API key for detailed strengths']);
+  fillList('concerns', llm.concerns || ['Run with LLM API key for detailed concerns']);
+
+  document.getElementById('emailBody').textContent = data.client_email || 'No email generated.';
+}
+
+function fillList(id, items) {
+  const ul = document.getElementById(id);
+  ul.innerHTML = '';
+  items.forEach(item => {
+    const li = document.createElement('li');
+    li.textContent = item;
+    ul.appendChild(li);
+  });
+}
+
+function copyEmail() {
+  const text = document.getElementById('emailBody').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = event.target;
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = 'Copy to Clipboard', 2000);
+  });
+}
+</script>
+</body>
+</html>
