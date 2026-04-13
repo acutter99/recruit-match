@@ -6,10 +6,52 @@
 <title>RecruitMatch - Candidate Screening Tool</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh}
-.container{max-width:1200px;margin:0 auto;padding:20px}
-h1{text-align:center;padding:24px 0;font-size:28px;color:#38bdf8}
-.subtitle{text-align:center;color:#94a3b8;margin-bottom:32px;font-size:14px}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh;display:flex}
+.sidebar{width:280px;background:#1e293b;border-right:1px solid #334155;padding:16px;overflow-y:auto;height:100vh;position:fixed}
+.sidebar h2{color:#38bdf8;font-size:16px;margin-bottom:12px}
+.sidebar .add-btn{width:100%;padding:10px;background:#2563eb;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;margin-bottom:16px}
+.sidebar .add-btn:hover{background:#1d4ed8}
+.client-list{list-style:none}
+.client-item{padding:10px 12px;border-radius:8px;cursor:pointer;margin-bottom:4px;font-size:14px;display:flex;justify-content:space-between;align-items:center}
+.client-item:hover{background:#334155}
+.client-item.active{background:#2563eb}
+.client-item .role-count{font-size:11px;color:#94a3b8;background:#0f172a;padding:2px 8px;border-radius:10px}
+.client-item.active .role-count{color:#e2e8f0}
+.client-item .del-btn{background:none;border:none;color:#64748b;cursor:pointer;font-size:16px;padding:0 4px}
+.client-item .del-btn:hover{color:#f87171}
+.main-content{margin-left:280px;flex:1;padding:20px;overflow-y:auto;min-height:100vh}
+h1{text-align:center;padding:16px 0;font-size:28px;color:#38bdf8}
+.subtitle{text-align:center;color:#94a3b8;margin-bottom:24px;font-size:14px}
+/* Client detail panel */
+.client-panel{display:none}
+.client-panel.visible{display:block}
+.client-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.client-header h2{color:#38bdf8;font-size:20px}
+.roles-section{margin-bottom:24px}
+.roles-section h3{color:#94a3b8;font-size:14px;margin-bottom:12px}
+.role-card{background:#1e293b;border:1px solid #334155;border-radius:8px;padding:14px;margin-bottom:8px;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
+.role-card:hover{border-color:#38bdf8}
+.role-card.active{border-color:#2563eb;background:#1e3a5f}
+.role-card h4{font-size:14px;color:#e2e8f0}
+.role-card .role-date{font-size:11px;color:#64748b}
+.role-card .del-btn{background:none;border:none;color:#64748b;cursor:pointer;font-size:14px}
+.role-card .del-btn:hover{color:#f87171}
+.add-role-btn{padding:8px 16px;background:#334155;color:#e2e8f0;border:none;border-radius:8px;cursor:pointer;font-size:13px;margin-bottom:16px}
+.add-role-btn:hover{background:#475569}
+/* Modal */
+.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:100;justify-content:center;align-items:center}
+.modal-overlay.visible{display:flex}
+.modal{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:24px;width:480px;max-width:90%}
+.modal h3{color:#38bdf8;margin-bottom:16px}
+.modal input,.modal textarea{width:100%;padding:10px 12px;background:#0f172a;border:1px solid #334155;border-radius:8px;color:#e2e8f0;font-size:14px;font-family:inherit;margin-bottom:12px}
+.modal textarea{min-height:120px;resize:vertical}
+.modal .modal-actions{display:flex;gap:8px;justify-content:flex-end}
+.modal .modal-actions button{padding:8px 20px;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600}
+.modal .save-btn{background:#2563eb;color:#fff}
+.modal .save-btn:hover{background:#1d4ed8}
+.modal .cancel-btn{background:#334155;color:#e2e8f0}
+.modal .cancel-btn:hover{background:#475569}
+/* Existing styles */
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px}
 .card{background:#1e293b;border-radius:12px;padding:20px;border:1px solid #334155}
 .card h2{font-size:16px;color:#38bdf8;margin-bottom:12px}
@@ -35,70 +77,239 @@ input:focus,textarea:focus{outline:none;border-color:#38bdf8}
 .copy-btn{display:inline-block;margin-top:8px;padding:6px 16px;background:#334155;color:#e2e8f0;border:none;border-radius:6px;cursor:pointer;font-size:12px}
 .copy-btn:hover{background:#475569}
 .spinner{display:none;text-align:center;padding:40px;font-size:16px;color:#94a3b8}
-@media(max-width:768px){.grid,.detail-grid{grid-template-columns:1fr}}
+.welcome-msg{text-align:center;padding:80px 20px;color:#64748b;font-size:16px}
+#matchSection{display:none}
+@media(max-width:768px){.grid,.detail-grid{grid-template-columns:1fr}.sidebar{width:220px}.main-content{margin-left:220px}}
 </style>
 </head>
 <body>
-<div class="container">
-<h1>RecruitMatch</h1>
-<p class="subtitle">Paste role details and candidate info to get an instant fit assessment and client email</p>
-
-<div class="grid">
-  <div class="card">
-    <h2>Role Information</h2>
-    <label for="firm">Client Firm Name</label>
-    <input type="text" id="firm" placeholder="e.g. Smith & Associates LLP">
-    <label for="role">Role Description</label>
-    <textarea id="role" placeholder="Paste the full job description or role requirements here..."></textarea>
-  </div>
-  <div class="card">
-    <h2>Candidate Information</h2>
-    <label for="resume">Candidate Resume</label>
-    <textarea id="resume" placeholder="Paste the candidate's resume text here..."></textarea>
-    <label for="notes">Your Screen Notes (optional)</label>
-    <textarea id="notes" style="min-height:80px" placeholder="e.g. Strong communicator, 8 yrs insurance defense, looking for partner track..."></textarea>
-  </div>
+<!-- Sidebar -->
+<div class="sidebar">
+  <h2>Clients</h2>
+  <button class="add-btn" onclick="showAddClient()">+ Add Client</button>
+  <ul class="client-list" id="clientList"></ul>
 </div>
 
-<button class="btn" id="analyzeBtn" onclick="analyze()">Analyze Candidate Fit</button>
+<!-- Main Content -->
+<div class="main-content">
+  <h1>RecruitMatch</h1>
+  <p class="subtitle">Select a client and role, then plug in a candidate for instant fit analysis</p>
 
-<div class="spinner" id="spinner">Analyzing candidate... this may take 10-20 seconds with LLM enabled...</div>
+  <!-- Welcome message when no client selected -->
+  <div id="welcomeMsg" class="welcome-msg">
+    <p>Select a client from the sidebar or add a new one to get started.</p>
+  </div>
 
-<div id="results">
-  <div class="card" style="margin-top:24px">
-    <h2>Match Result</h2>
-    <div id="scoreBadge" class="score-badge"></div>
-    <div id="recommendation" class="rec"></div>
+  <!-- Client detail panel -->
+  <div id="clientPanel" class="client-panel">
+    <div class="client-header">
+      <h2 id="clientName"></h2>
+    </div>
+    <div class="roles-section">
+      <h3>Saved Roles</h3>
+      <button class="add-role-btn" onclick="showAddRole()">+ Add Role</button>
+      <div id="rolesList"></div>
+    </div>
 
-    <div class="detail-grid">
-      <div class="detail-card">
-        <h3>Matched Keywords</h3>
-        <ul id="matchedKw"></ul>
+    <!-- Match section - shown when a role is selected -->
+    <div id="matchSection">
+      <div class="grid">
+        <div class="card">
+          <h2>Role Information (auto-filled)</h2>
+          <label for="firm">Client Firm Name</label>
+          <input type="text" id="firm" readonly>
+          <label for="role">Role Description</label>
+          <textarea id="role" readonly></textarea>
+        </div>
+        <div class="card">
+          <h2>Candidate Information</h2>
+          <label for="resume">Candidate Resume</label>
+          <textarea id="resume" placeholder="Paste resume text here..."></textarea>
+          <label for="notes">Your Screen Notes (optional)</label>
+          <textarea id="notes" placeholder="Any observations from your screen call..." style="min-height:80px"></textarea>
+        </div>
       </div>
-      <div class="detail-card">
-        <h3>Missing / Gaps</h3>
-        <ul id="missingKw"></ul>
-      </div>
-      <div class="detail-card">
-        <h3>Strengths</h3>
-        <ul id="strengths"></ul>
-      </div>
-      <div class="detail-card">
-        <h3>Concerns</h3>
-        <ul id="concerns"></ul>
+      <button class="btn" id="analyzeBtn" onclick="analyze()">Analyze Candidate Fit</button>
+      <div class="spinner" id="spinner">Analyzing candidate... this may take 10-20 seconds with LLM enabled...</div>
+      <div id="results">
+        <div class="card" style="margin-top:20px">
+          <h2>Match Result</h2>
+          <div id="scoreBadge" class="score-badge"></div>
+          <div id="recommendation" class="rec"></div>
+          <div class="detail-grid">
+            <div class="detail-card"><h3>Matched Keywords</h3><ul id="matchedKw"></ul></div>
+            <div class="detail-card"><h3>Missing / Gaps</h3><ul id="missingKw"></ul></div>
+            <div class="detail-card"><h3>Strengths</h3><ul id="strengths"></ul></div>
+            <div class="detail-card"><h3>Concerns</h3><ul id="concerns"></ul></div>
+          </div>
+        </div>
+        <div class="card" style="margin-top:16px">
+          <h2>Client Email Write-Up</h2>
+          <div class="email-box" id="emailBody"></div>
+          <button class="copy-btn" onclick="copyEmail()">Copy to Clipboard</button>
+        </div>
       </div>
     </div>
   </div>
+</div>
 
-  <div class="card" style="margin-top:16px">
-    <h2>Client Email Write-Up</h2>
-    <div class="email-box" id="emailBody"></div>
-    <button class="copy-btn" onclick="copyEmail()">Copy to Clipboard</button>
+<!-- Add Client Modal -->
+<div class="modal-overlay" id="addClientModal">
+  <div class="modal">
+    <h3>Add New Client</h3>
+    <input type="text" id="newClientName" placeholder="Client firm name (e.g. Smith & Associates LLP)">
+    <textarea id="newClientNotes" placeholder="Notes about this client (optional)" style="min-height:80px"></textarea>
+    <div class="modal-actions">
+      <button class="cancel-btn" onclick="hideModals()">Cancel</button>
+      <button class="save-btn" onclick="saveClient()">Save Client</button>
+    </div>
   </div>
 </div>
+
+<!-- Add Role Modal -->
+<div class="modal-overlay" id="addRoleModal">
+  <div class="modal">
+    <h3>Add New Role</h3>
+    <input type="text" id="newRoleTitle" placeholder="Role title (e.g. Senior Associate - Insurance Defense)">
+    <textarea id="newRoleDesc" placeholder="Paste the full job description or role requirements here..."></textarea>
+    <div class="modal-actions">
+      <button class="cancel-btn" onclick="hideModals()">Cancel</button>
+      <button class="save-btn" onclick="saveRole()">Save Role</button>
+    </div>
+  </div>
 </div>
 
 <script>
+let currentClientId = null;
+let currentRoleId = null;
+
+// --- Load clients on page load ---
+async function loadClients() {
+  const resp = await fetch('/api/clients');
+  const clients = await resp.json();
+  const list = document.getElementById('clientList');
+  list.innerHTML = '';
+  clients.forEach(c => {
+    const li = document.createElement('li');
+    li.className = 'client-item' + (c.id === currentClientId ? ' active' : '');
+    li.innerHTML = `<span onclick="selectClient('${c.id}')">${c.name} <span class="role-count">${c.role_count} roles</span></span><button class="del-btn" onclick="event.stopPropagation();deleteClient('${c.id}')">&times;</button>`;
+    li.querySelector('span').style.flex = '1';
+    li.querySelector('span').style.cursor = 'pointer';
+    list.appendChild(li);
+  });
+}
+
+async function selectClient(id) {
+  currentClientId = id;
+  currentRoleId = null;
+  document.getElementById('matchSection').style.display = 'none';
+  document.getElementById('results').style.display = 'none';
+  const resp = await fetch(`/api/clients/${id}`);
+  const client = await resp.json();
+  document.getElementById('clientName').textContent = client.name;
+  document.getElementById('welcomeMsg').style.display = 'none';
+  document.getElementById('clientPanel').classList.add('visible');
+  renderRoles(client.roles);
+  loadClients();
+}
+
+function renderRoles(roles) {
+  const container = document.getElementById('rolesList');
+  container.innerHTML = '';
+  if (roles.length === 0) {
+    container.innerHTML = '<p style="color:#64748b;font-size:13px">No roles saved yet. Add one to start matching candidates.</p>';
+    return;
+  }
+  roles.forEach(r => {
+    const div = document.createElement('div');
+    div.className = 'role-card' + (r.id === currentRoleId ? ' active' : '');
+    div.innerHTML = `<div onclick="selectRole('${r.id}','${r.title.replace(/'/g, "\\'")}')"><h4>${r.title}</h4><span class="role-date">${new Date(r.created_at).toLocaleDateString()}</span></div><button class="del-btn" onclick="event.stopPropagation();deleteRole('${r.id}')">&times;</button>`;
+    div.querySelector('div').style.flex = '1';
+    div.querySelector('div').style.cursor = 'pointer';
+    container.appendChild(div);
+  });
+}
+
+async function selectRole(roleId, roleTitle) {
+  currentRoleId = roleId;
+  const resp = await fetch(`/api/clients/${currentClientId}`);
+  const client = await resp.json();
+  const role = client.roles.find(r => r.id === roleId);
+  if (!role) return;
+  document.getElementById('firm').value = client.name;
+  document.getElementById('role').value = role.description;
+  document.getElementById('resume').value = '';
+  document.getElementById('notes').value = '';
+  document.getElementById('matchSection').style.display = 'block';
+  document.getElementById('results').style.display = 'none';
+  renderRoles(client.roles);
+}
+
+// --- CRUD operations ---
+function showAddClient() {
+  document.getElementById('newClientName').value = '';
+  document.getElementById('newClientNotes').value = '';
+  document.getElementById('addClientModal').classList.add('visible');
+}
+
+function showAddRole() {
+  document.getElementById('newRoleTitle').value = '';
+  document.getElementById('newRoleDesc').value = '';
+  document.getElementById('addRoleModal').classList.add('visible');
+}
+
+function hideModals() {
+  document.getElementById('addClientModal').classList.remove('visible');
+  document.getElementById('addRoleModal').classList.remove('visible');
+}
+
+async function saveClient() {
+  const name = document.getElementById('newClientName').value.trim();
+  if (!name) return alert('Please enter a client name.');
+  await fetch('/api/clients', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({name, notes: document.getElementById('newClientNotes').value}),
+  });
+  hideModals();
+  loadClients();
+}
+
+async function saveRole() {
+  const title = document.getElementById('newRoleTitle').value.trim();
+  const description = document.getElementById('newRoleDesc').value.trim();
+  if (!title || !description) return alert('Please enter both title and description.');
+  await fetch(`/api/clients/${currentClientId}/roles`, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({title, description}),
+  });
+  hideModals();
+  selectClient(currentClientId);
+}
+
+async function deleteClient(id) {
+  if (!confirm('Delete this client and all its roles?')) return;
+  await fetch(`/api/clients/${id}`, {method: 'DELETE'});
+  if (currentClientId === id) {
+    currentClientId = null;
+    document.getElementById('clientPanel').classList.remove('visible');
+    document.getElementById('welcomeMsg').style.display = 'block';
+  }
+  loadClients();
+}
+
+async function deleteRole(roleId) {
+  if (!confirm('Delete this role?')) return;
+  await fetch(`/api/clients/${currentClientId}/roles/${roleId}`, {method: 'DELETE'});
+  if (currentRoleId === roleId) {
+    currentRoleId = null;
+    document.getElementById('matchSection').style.display = 'none';
+  }
+  selectClient(currentClientId);
+}
+
+// --- Analyze (existing logic) ---
 async function analyze() {
   const btn = document.getElementById('analyzeBtn');
   const spinner = document.getElementById('spinner');
@@ -106,14 +317,12 @@ async function analyze() {
   btn.disabled = true;
   spinner.style.display = 'block';
   results.style.display = 'none';
-
   const body = {
     client_firm: document.getElementById('firm').value,
     role_description: document.getElementById('role').value,
     candidate_resume: document.getElementById('resume').value,
     screen_notes: document.getElementById('notes').value,
   };
-
   try {
     const resp = await fetch('/api/match', {
       method: 'POST',
@@ -133,21 +342,16 @@ async function analyze() {
 function renderResults(data) {
   const results = document.getElementById('results');
   results.style.display = 'block';
-
   const badge = document.getElementById('scoreBadge');
   badge.textContent = data.score + '/100';
   badge.className = 'score-badge ' + (data.score >= 75 ? 'score-high' : data.score >= 50 ? 'score-mid' : 'score-low');
-
   document.getElementById('recommendation').textContent = data.recommendation;
-
   const bl = data.baseline || {};
   fillList('matchedKw', bl.matched_keywords || []);
   fillList('missingKw', bl.missing_keywords || []);
-
   const llm = data.llm_analysis || {};
   fillList('strengths', llm.strengths || ['Run with LLM API key for detailed strengths']);
   fillList('concerns', llm.concerns || ['Run with LLM API key for detailed concerns']);
-
   document.getElementById('emailBody').textContent = data.client_email || 'No email generated.';
 }
 
@@ -169,6 +373,9 @@ function copyEmail() {
     setTimeout(() => btn.textContent = 'Copy to Clipboard', 2000);
   });
 }
+
+// Init
+loadClients();
 </script>
 </body>
 </html>
