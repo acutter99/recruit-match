@@ -22,7 +22,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .main-content{margin-left:280px;flex:1;padding:20px;overflow-y:auto;min-height:100vh}
 h1{text-align:center;padding:16px 0;font-size:28px;color:#38bdf8}
 .subtitle{text-align:center;color:#94a3b8;margin-bottom:24px;font-size:14px}
-/* Client detail panel */
 .client-panel{display:none}
 .client-panel.visible{display:block}
 .client-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
@@ -51,14 +50,36 @@ h1{text-align:center;padding:16px 0;font-size:28px;color:#38bdf8}
 .modal .save-btn:hover{background:#1d4ed8}
 .modal .cancel-btn{background:#334155;color:#e2e8f0}
 .modal .cancel-btn:hover{background:#475569}
+/* Tone selector */
+.tone-section{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:20px;margin-bottom:20px}
+.tone-section h3{color:#38bdf8;font-size:15px;margin-bottom:12px}
+.tone-grid{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.tone-pill{padding:8px 16px;border-radius:20px;border:1px solid #334155;background:#0f172a;color:#94a3b8;cursor:pointer;font-size:13px;transition:all .2s}
+.tone-pill:hover{border-color:#38bdf8;color:#e2e8f0}
+.tone-pill.active{background:#2563eb;border-color:#2563eb;color:#fff}
+.tone-desc{font-size:12px;color:#64748b;font-style:italic;margin-bottom:12px;min-height:32px}
+/* Write-up section */
+.writeup-section{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:20px;margin-top:20px}
+.writeup-section h2{font-size:16px;color:#38bdf8;margin-bottom:12px}
+.writeup-box{background:#0f172a;border:1px solid #334155;border-radius:8px;padding:16px;font-size:14px;line-height:1.7;white-space:pre-wrap;min-height:120px;color:#e2e8f0}
+.writeup-editable{border-color:#38bdf8;outline:none}
+.writeup-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.writeup-actions button{padding:8px 16px;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:500}
+.regen-btn{background:#7c3aed;color:#fff}
+.regen-btn:hover{background:#6d28d9}
+.regen-btn:disabled{background:#334155;cursor:not-allowed}
+.edit-btn{background:#334155;color:#e2e8f0}
+.edit-btn:hover{background:#475569}
+.copy-writeup-btn{background:#334155;color:#e2e8f0}
+.copy-writeup-btn:hover{background:#475569}
 /* Existing styles */
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px}
 .card{background:#1e293b;border-radius:12px;padding:20px;border:1px solid #334155}
 .card h2{font-size:16px;color:#38bdf8;margin-bottom:12px}
 label{display:block;font-size:13px;color:#94a3b8;margin-bottom:6px;margin-top:12px}
-input,textarea{width:100%;padding:10px 12px;background:#0f172a;border:1px solid #334155;border-radius:8px;color:#e2e8f0;font-size:14px;font-family:inherit}
+input,textarea,select{width:100%;padding:10px 12px;background:#0f172a;border:1px solid #334155;border-radius:8px;color:#e2e8f0;font-size:14px;font-family:inherit}
 textarea{min-height:160px;resize:vertical}
-input:focus,textarea:focus{outline:none;border-color:#38bdf8}
+input:focus,textarea:focus,select:focus{outline:none;border-color:#38bdf8}
 .btn{display:block;width:100%;padding:14px;background:#2563eb;color:#fff;border:none;border-radius:10px;font-size:16px;font-weight:600;cursor:pointer;transition:background .2s}
 .btn:hover{background:#1d4ed8}
 .btn:disabled{background:#334155;cursor:not-allowed}
@@ -89,30 +110,32 @@ input:focus,textarea:focus{outline:none;border-color:#38bdf8}
   <button class="add-btn" onclick="showAddClient()">+ Add Client</button>
   <ul class="client-list" id="clientList"></ul>
 </div>
-
-<!-- Main Content -->
 <div class="main-content">
   <h1>RecruitMatch</h1>
   <p class="subtitle">Select a client and role, then plug in a candidate for instant fit analysis</p>
-
-  <!-- Welcome message when no client selected -->
-  <div id="welcomeMsg" class="welcome-msg">
-    <p>Select a client from the sidebar or add a new one to get started.</p>
-  </div>
-
-  <!-- Client detail panel -->
+  <div id="welcomeMsg" class="welcome-msg"><p>Select a client from the sidebar or add a new one to get started.</p></div>
   <div id="clientPanel" class="client-panel">
-    <div class="client-header">
-      <h2 id="clientName"></h2>
-    </div>
+    <div class="client-header"><h2 id="clientName"></h2></div>
     <div class="roles-section">
       <h3>Saved Roles</h3>
       <button class="add-role-btn" onclick="showAddRole()">+ Add Role</button>
       <div id="rolesList"></div>
     </div>
-
-    <!-- Match section - shown when a role is selected -->
     <div id="matchSection">
+      <!-- Tone selector -->
+      <div class="tone-section">
+        <h3>Write-Up Tone</h3>
+        <div class="tone-grid" id="toneGrid">
+          <span class="tone-pill active" data-tone="professional" onclick="selectTone(this)">Professional</span>
+          <span class="tone-pill" data-tone="conversational" onclick="selectTone(this)">Conversational</span>
+          <span class="tone-pill" data-tone="executive" onclick="selectTone(this)">Executive Brief</span>
+          <span class="tone-pill" data-tone="consultative" onclick="selectTone(this)">Consultative</span>
+          <span class="tone-pill" data-tone="enthusiastic" onclick="selectTone(this)">Enthusiastic</span>
+        </div>
+        <div class="tone-desc" id="toneDesc">Polished, formal business tone with confident authoritative voice.</div>
+        <label for="customInstructions">Custom Instructions (optional)</label>
+        <textarea id="customInstructions" style="min-height:60px" placeholder="e.g. 'Focus on their litigation experience' or 'Mention they are open to relocation' or 'Keep it under 3 sentences'"></textarea>
+      </div>
       <div class="grid">
         <div class="card">
           <h2>Role Information (auto-filled)</h2>
@@ -130,8 +153,18 @@ input:focus,textarea:focus{outline:none;border-color:#38bdf8}
         </div>
       </div>
       <button class="btn" id="analyzeBtn" onclick="analyze()">Analyze Candidate Fit</button>
-      <div class="spinner" id="spinner">Analyzing candidate... this may take 10-20 seconds with LLM enabled...</div>
+      <div class="spinner" id="spinner">Analyzing candidate and generating write-up... this may take 15-30 seconds...</div>
       <div id="results">
+        <!-- Write-up section (NEW - primary output) -->
+        <div class="writeup-section">
+          <h2>Candidate Write-Up <span id="toneLabel" style="font-size:12px;color:#94a3b8;font-weight:400"></span></h2>
+          <div class="writeup-box" id="writeupBody"></div>
+          <div class="writeup-actions">
+            <button class="regen-btn" id="regenBtn" onclick="regenerateWriteup()">Regenerate with Current Tone</button>
+            <button class="edit-btn" onclick="toggleEditWriteup()">Edit Write-Up</button>
+            <button class="copy-writeup-btn" onclick="copyWriteup()">Copy Write-Up</button>
+          </div>
+        </div>
         <div class="card" style="margin-top:20px">
           <h2>Match Result</h2>
           <div id="scoreBadge" class="score-badge"></div>
@@ -152,26 +185,23 @@ input:focus,textarea:focus{outline:none;border-color:#38bdf8}
     </div>
   </div>
 </div>
-
 <!-- Add Client Modal -->
 <div class="modal-overlay" id="addClientModal">
   <div class="modal">
     <h3>Add New Client</h3>
-    <input type="text" id="newClientName" placeholder="Client firm name (e.g. Smith & Associates LLP)">
-    <textarea id="newClientNotes" placeholder="Notes about this client (optional)" style="min-height:80px"></textarea>
+    <input type="text" id="newClientName" placeholder="Client firm name">
+    <textarea id="newClientNotes" placeholder="Notes (optional)" style="min-height:80px"></textarea>
     <div class="modal-actions">
       <button class="cancel-btn" onclick="hideModals()">Cancel</button>
       <button class="save-btn" onclick="saveClient()">Save Client</button>
     </div>
   </div>
 </div>
-
-<!-- Add Role Modal -->
 <div class="modal-overlay" id="addRoleModal">
   <div class="modal">
     <h3>Add New Role</h3>
-    <input type="text" id="newRoleTitle" placeholder="Role title (e.g. Senior Associate - Insurance Defense)">
-    <textarea id="newRoleDesc" placeholder="Paste the full job description or role requirements here..."></textarea>
+    <input type="text" id="newRoleTitle" placeholder="Role title">
+    <textarea id="newRoleDesc" placeholder="Paste full job description..."></textarea>
     <div class="modal-actions">
       <button class="cancel-btn" onclick="hideModals()">Cancel</button>
       <button class="save-btn" onclick="saveRole()">Save Role</button>
@@ -182,8 +212,23 @@ input:focus,textarea:focus{outline:none;border-color:#38bdf8}
 <script>
 let currentClientId = null;
 let currentRoleId = null;
+let currentTone = 'professional';
 
-// --- Load clients on page load ---
+const TONE_DESCS = {
+  professional: 'Polished, formal business tone with confident authoritative voice.',
+  conversational: 'Warm and approachable, like talking to the client over coffee.',
+  executive: 'Concise, high-level executive briefing. No filler, just impact.',
+  consultative: 'Strategic advisor framing the candidate in terms of business impact.',
+  enthusiastic: 'Energetic and compelling. Conveys urgency to move on this candidate.',
+};
+
+function selectTone(el) {
+  document.querySelectorAll('.tone-pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  currentTone = el.dataset.tone;
+  document.getElementById('toneDesc').textContent = TONE_DESCS[currentTone] || '';
+}
+
 async function loadClients() {
   const resp = await fetch('/api/clients');
   const clients = await resp.json();
@@ -223,14 +268,14 @@ function renderRoles(roles) {
   roles.forEach(r => {
     const div = document.createElement('div');
     div.className = 'role-card' + (r.id === currentRoleId ? ' active' : '');
-    div.innerHTML = `<div onclick="selectRole('${r.id}','${r.title.replace(/'/g, "\\'")}')"><h4>${r.title}</h4><span class="role-date">${new Date(r.created_at).toLocaleDateString()}</span></div><button class="del-btn" onclick="event.stopPropagation();deleteRole('${r.id}')">&times;</button>`;
+    div.innerHTML = `<div onclick="selectRole('${r.id}')"><h4>${r.title}</h4><span class="role-date">${new Date(r.created_at).toLocaleDateString()}</span></div><button class="del-btn" onclick="event.stopPropagation();deleteRole('${r.id}')">&times;</button>`;
     div.querySelector('div').style.flex = '1';
     div.querySelector('div').style.cursor = 'pointer';
     container.appendChild(div);
   });
 }
 
-async function selectRole(roleId, roleTitle) {
+async function selectRole(roleId) {
   currentRoleId = roleId;
   const resp = await fetch(`/api/clients/${currentClientId}`);
   const client = await resp.json();
@@ -245,24 +290,20 @@ async function selectRole(roleId, roleTitle) {
   renderRoles(client.roles);
 }
 
-// --- CRUD operations ---
 function showAddClient() {
   document.getElementById('newClientName').value = '';
   document.getElementById('newClientNotes').value = '';
   document.getElementById('addClientModal').classList.add('visible');
 }
-
 function showAddRole() {
   document.getElementById('newRoleTitle').value = '';
   document.getElementById('newRoleDesc').value = '';
   document.getElementById('addRoleModal').classList.add('visible');
 }
-
 function hideModals() {
   document.getElementById('addClientModal').classList.remove('visible');
   document.getElementById('addRoleModal').classList.remove('visible');
 }
-
 async function saveClient() {
   const name = document.getElementById('newClientName').value.trim();
   if (!name) return alert('Please enter a client name.');
@@ -274,7 +315,6 @@ async function saveClient() {
   hideModals();
   loadClients();
 }
-
 async function saveRole() {
   const title = document.getElementById('newRoleTitle').value.trim();
   const description = document.getElementById('newRoleDesc').value.trim();
@@ -287,7 +327,6 @@ async function saveRole() {
   hideModals();
   selectClient(currentClientId);
 }
-
 async function deleteClient(id) {
   if (!confirm('Delete this client and all its roles?')) return;
   await fetch(`/api/clients/${id}`, {method: 'DELETE'});
@@ -298,7 +337,6 @@ async function deleteClient(id) {
   }
   loadClients();
 }
-
 async function deleteRole(roleId) {
   if (!confirm('Delete this role?')) return;
   await fetch(`/api/clients/${currentClientId}/roles/${roleId}`, {method: 'DELETE'});
@@ -309,7 +347,6 @@ async function deleteRole(roleId) {
   selectClient(currentClientId);
 }
 
-// --- Analyze (existing logic) ---
 async function analyze() {
   const btn = document.getElementById('analyzeBtn');
   const spinner = document.getElementById('spinner');
@@ -322,6 +359,8 @@ async function analyze() {
     role_description: document.getElementById('role').value,
     candidate_resume: document.getElementById('resume').value,
     screen_notes: document.getElementById('notes').value,
+    tone: currentTone,
+    custom_instructions: document.getElementById('customInstructions').value,
   };
   try {
     const resp = await fetch('/api/match', {
@@ -339,9 +378,63 @@ async function analyze() {
   }
 }
 
+async function regenerateWriteup() {
+  const btn = document.getElementById('regenBtn');
+  btn.disabled = true;
+  btn.textContent = 'Regenerating...';
+  const body = {
+    client_firm: document.getElementById('firm').value,
+    role_description: document.getElementById('role').value,
+    candidate_resume: document.getElementById('resume').value,
+    screen_notes: document.getElementById('notes').value,
+    tone: currentTone,
+    custom_instructions: document.getElementById('customInstructions').value,
+  };
+  try {
+    const resp = await fetch('/api/regenerate-writeup', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(body),
+    });
+    const data = await resp.json();
+    document.getElementById('writeupBody').textContent = data.candidate_writeup || 'No write-up generated.';
+    document.getElementById('writeupBody').contentEditable = 'false';
+    const toneLabel = data.tone_used ? ` (${data.tone_used})` : '';
+    document.getElementById('toneLabel').textContent = toneLabel;
+  } catch (e) {
+    alert('Error regenerating: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Regenerate with Current Tone';
+  }
+}
+
+function toggleEditWriteup() {
+  const box = document.getElementById('writeupBody');
+  const isEditable = box.contentEditable === 'true';
+  box.contentEditable = isEditable ? 'false' : 'true';
+  box.classList.toggle('writeup-editable', !isEditable);
+  if (!isEditable) box.focus();
+}
+
+function copyWriteup() {
+  const text = document.getElementById('writeupBody').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btns = document.querySelectorAll('.copy-writeup-btn');
+    btns.forEach(b => { b.textContent = 'Copied!'; setTimeout(() => b.textContent = 'Copy Write-Up', 2000); });
+  });
+}
+
 function renderResults(data) {
   const results = document.getElementById('results');
   results.style.display = 'block';
+  // Write-up
+  const writeup = data.candidate_writeup || 'No write-up generated. Configure an API key for AI-powered write-ups.';
+  document.getElementById('writeupBody').textContent = typeof writeup === 'string' ? writeup : JSON.stringify(writeup);
+  document.getElementById('writeupBody').contentEditable = 'false';
+  const toneLabel = data.tone_used ? ` (${data.tone_used})` : '';
+  document.getElementById('toneLabel').textContent = toneLabel;
+  // Score
   const badge = document.getElementById('scoreBadge');
   badge.textContent = data.score + '/100';
   badge.className = 'score-badge ' + (data.score >= 75 ? 'score-high' : data.score >= 50 ? 'score-mid' : 'score-low');
@@ -374,7 +467,6 @@ function copyEmail() {
   });
 }
 
-// Init
 loadClients();
 </script>
 </body>
