@@ -61,3 +61,38 @@ SCREEN NOTES:
 {analysis_context}
 
 Write the one-paragraph email body only (no subject line, no greeting, no signature)."""
+
+
+
+def build_sourcing_prompt(
+    role_description: str,
+    location: str,
+    client_firm: str = "",
+) -> str:
+    exclude_note = f"\nIMPORTANT: Do NOT include {client_firm} in your suggestions - that is the hiring client." if client_firm else ""
+
+    return f"""You are an expert legal and financial services recruiter with deep knowledge of firm landscapes across the United States.
+
+Given the following role description and geographic location, identify specific firms, companies, and organizations where qualified candidates for this role are likely currently working. These are sourcing targets - places to recruit FROM.
+
+For each suggestion, provide:
+- name: The firm or organization name
+- type: Category (e.g. "Law Firm", "Insurance Carrier", "Bank", "Corporate Legal Dept", etc.)
+- relevance: Why candidates from here would be a good fit (1 sentence)
+- size_tier: "Large", "Mid-size", or "Small/Boutique"
+
+Return a JSON object with these fields:
+- target_firms (list of objects): 8-12 specific named firms/companies in or near the location
+- target_categories (list of strings): 5-8 broader categories of employers to search
+- linkedin_search_keywords (list of strings): 5-8 keyword combinations for LinkedIn searches
+- job_boards_to_monitor (list of strings): 3-5 job boards or listing sites to watch for competitor openings
+- networking_suggestions (list of strings): 3-5 local events, bar associations, or groups to engage
+- sourcing_strategy (string): 2-3 sentence recommended sourcing approach
+
+ROLE DESCRIPTION:
+{role_description}
+
+GEOGRAPHIC LOCATION: {location}
+{exclude_note}
+
+Respond with valid JSON only."""
